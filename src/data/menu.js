@@ -1,51 +1,19 @@
-// src/data/menu.js
+// Datos de ejemplo, completa con todos los ítems reales
 const MENU_DATA = [
-    {
-        id: "Algo",
-        name: "ALGO EKISDE",
-        items: [
-            {name:"WAWAWA",
-            descripcion: "ES UN EKISDE DE EKISDE",
-            price: 50000000050,
-            currency: "CUP",
-            popular: false,
-            soldOut: false,
-        },
-        {name:"WAWAWA",
-            descripcion: "ES UN EKISDE DE EKISDE",
-            price: 50000000050,
-            currency: "CUP",
-            popular: false,
-            soldOut: false,
-        },
-        {name:"WAWAWA",
-            descripcion: "ES UN EKISDE DE EKISDE",
-            price: 50000000050,
-            currency: "CUP",
-            popular: false,
-            soldOut: false,
-        },
-        {name:"WAWAWA",
-            descripcion: "ES UN EKISDE DE EKISDE",
-            price: 50000000050,
-            currency: "CUP",
-            popular: false,
-            soldOut: false,
-        },     
-        ],
-    },
-    {
-        id: "cremas",
-        name: "creams ekisde",
-        items: [
-            {
-                name: "Creama con sabpr a queso humano EKisde",
-                descripcion: "Paja humana o no humana",
-                price: 200000002020202020202220,
-                currency: "CUP",
-                popular: true,
-                soldOut: true,
-            },
-        ],
-    },
+  {
+    id: "aperitivos",
+    name: "Aperitivos",
+    items: [
+      { id: "a1", name: "Papas Lokas", description: "Papas fritas con jamón y queso", price: 1400, currency: "CUP", popular: true, soldOut: false },
+      { id: "a2", name: "Ensalada Fría de Pollo", description: "", price: 550, currency: "CUP", popular: false, soldOut: false }
+    ]
+  },
+  {
+    id: "cremas",
+    name: "Cremas",
+    items: [
+      { id: "c1", name: "Crema Dos Quesos", description: "Harina, mantequilla, leche, queso gouda y azul", price: 600, currency: "CUP", popular: false, soldOut: false }
+    ]
+  }
+  // Añade el resto de categorías e ítems
 ];
