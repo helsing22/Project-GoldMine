@@ -1,0 +1,17 @@
+{
+  "default": {
+    "staff": "TurnoGeneral",
+    "phone": "+53500000000",
+    "qr": "default.png"
+  },
+  "2026-04-28": {
+    "staff": "Carlos",
+    "phone": "+53500123456",
+    "qr": "2026-04-28-carlos.png"
+  },
+  "2026-04-29": {
+    "staff": "María",
+    "phone": "+53500987654",
+    "qr": "2026-04-29-maria.png"
+  }
+}

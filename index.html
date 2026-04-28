@@ -1,50 +1,82 @@
 <!DOCTYPE html>
 <html lang="es">
-    <head>
-        <meta charset="UTF-8"/>
-        <title> EKISDE|Menu </title>
-        <meta name="viewport" content="width=device-width, initial-scale=1"/>
-        <link rel="icon" href=".\public\fab.ico" />
-        <link rel="stylesheet" href="./src/css/styles.css"/>
-    </head>
-    <body>
-        <header class="header">
-            <div class="header_brand">
-                <img src="./public/logo.png" alt="logoimg">
-                <div>
-                    <h1> EKISDE </h1>
-                    <p> Aguada, Cuba • 4.4 ★ • $$ - $$$$</p>
-                </div>
-            </div>
-            <div class="header_status">
-                <span class="chip chip--active">Domicilio?</span>
-                <span class="chip chip--active">Recogida?</span>
-            </div>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>JotaJota | Menú</title>
+  <link rel="icon" href="./public/favicon.ico" />
+  <link rel="stylesheet" href="./src/css/styles.css" />
+</head>
+<body>
+  <div class="page-wrapper">
+    <header class="header">
+      <div class="header__brand">
+        <img src="./public/logo.png" alt="JotaJota" class="header__logo" />
+        <div>
+          <h1>JotaJota</h1>
+          <p>Cienfuegos · 4.4 ★ · $$</p>
+        </div>
+      </div>
+      <div class="header__status">
+        <span class="chip chip--active">Domicilio</span>
+        <span class="chip chip--active">Recogida</span>
+      </div>
+    </header>
+
+    <nav class="sidebar" id="sidebar-categories"></nav>
+
+    <main class="layout" id="main-layout">
+      <section class="notice">
+        <h2>Debes saber que...</h2>
+        <p>10% adicional en salón. Feriados: 24, 31 dic y 1 ene.</p>
+      </section>
+
+      <div id="menu-sections"></div>
+    </main>
+
+    <button id="cart-button" class="cart-button">🛒 <span id="cart-count">0</span></button>
+
+    <div id="cart-modal" class="modal hidden" aria-hidden="true">
+      <div class="modal__backdrop"></div>
+      <div class="modal__panel">
+        <header class="modal__header">
+          <h3>Tu pedido</h3>
+          <button id="close-cart">✕</button>
         </header>
-        <main class="content">
-           <aside class="sidebar" id="sidebar-categories">
-            <!--Categorias generadas por JavaScript-->
-           </aside>
+        <div id="cart-items" class="cart-items"></div>
+        <div class="cart-summary">
+          <p>Total: <strong id="cart-total">0 CUP</strong></p>
+        </div>
+        <div class="checkout-actions">
+          <button id="checkout-cash" class="btn">Pagar en efectivo</button>
+          <button id="checkout-online" class="btn btn--primary">Pagar en línea (QR)</button>
+        </div>
+      </div>
+    </div>
 
-            <section class="notice">
-                <h2>Debes saber que...</h2>
-                <p>texto de info</p>
-                <p>Texto de info</p>
-            </section>
+    <div id="qr-modal" class="modal hidden">
+      <div class="modal__backdrop"></div>
+      <div class="modal__panel">
+        <header class="modal__header">
+          <h3>Pagar en línea</h3>
+          <button id="close-qr">✕</button>
+        </header>
+        <div class="qr-content">
+          <p>Escanea el QR para pagar:</p>
+          <img id="qr-image" src="" alt="QR de pago" style="max-width:260px;">
+          <p id="qr-note" class="muted"></p>
+        </div>
+      </div>
+    </div>
 
-            <div id="menu-sections">
-                <!-- Secciones del menu generadas por JavaScript-->
-            </div>
-            </section>
-        </main>
+    <footer class="footer">
+      <p>JotaJota · Cienfuegos, Cuba</p>
+      <p>© <span id="year"></span></p>
+    </footer>
+  </div>
 
-        <footer class="footer">
-            <p>EKISDE • Aguada, Cienfuegos, Cuba</p>
-            <p><span id="year"></span> Todos los derechos Reservados.</p>
-            <p>Desarrollo y diseño web por: </p>
-        </footer>
-
-        <script src="./src/data/menu.js"></script>
-        <script src="./src/js/app.js"></script>
-    </body>     
+  <script src="./src/data/menu.js"></script>
+  <script src="./src/data/shifts.json" type="application/json"></script>
+  <script src="./src/js/app.js"></script>
+</body>
 </html>
