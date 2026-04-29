@@ -1,49 +1,22 @@
-Ekisde Menu
+# Mary - Menú de mesa
 
-1. Preparar repo
-- Coloca QR en public/qrs/ con nombres que coincidan en src/data/shifts.json
-- Completa src/data/menu.js con todos los ítems reales
+## Qué hace
+Menú móvil para mesas: el cliente escanea QR de la mesa, selecciona productos, copia el monto al portapapeles y elige método de pago (Zelle, PayPal, Visa, Transfermóvil). Transfermóvil muestra un QR por turno del día.
 
-2. Variables de entorno en Render
-- NODE_ENV=production
-- TWILIO_ACCOUNT_SID (opcional)
-- TWILIO_AUTH_TOKEN (opcional)
-- TWILIO_FROM (opcional)
+## Estructura
+- `public/qrs/` → coloca aquí las imágenes QR.
+- `src/data/menu.js` → datos del menú.
+- `src/data/shifts.json` → mapeo fecha -> staff, phone, qr, links.
+- `src/js/app.js` → lógica frontend.
+- `server.js` → servidor Express con endpoints `/api/shift` y `/api/qr`.
 
-3. Deploy en Render
-- Conecta repo a Render
-- New Web Service -> selecciona repo
-- Build Command: npm install
-- Start Command: npm start
+## Deploy (ejemplo en Render)
+1. Subir repo a GitHub.
+2. Crear Web Service en Render apuntando al repo.
+3. Build: `npm install`
+4. Start: `npm start`
 
-4. Opcional Postgres
-- Crea servicio Postgres en Render
-- Ejecuta sql/create_tables.sql
-- Modifica server.js para leer shifts desde la DB en vez de shifts.json
-
-5. Notas
-- Si Twilio no está configurado, el backend registrará pedidos pero no enviará SMS.
-- orders.json se crea automáticamente para registro simple.
-
-
-ekisde-menu/
-├─ public/
-│  ├─ qrs/
-│  │  └─ (coloca aquí tus imágenes QR: YYYY-MM-DD-nombre.png)
-│  ├─ favicon.ico
-│  └─ logo.png
-├─ src/
-│  ├─ data/
-│  │  ├─ menu.js
-│  │  └─ shifts.json
-│  ├─ css/
-│  │  └─ styles.css
-│  └─ js/
-│     └─ app.js
-├─ index.html
-├─ server.js
-├─ package.json
-├─ README.md
-├─ .gitignore
-└─ sql/
-   └─ create_tables.sql
+## Notas
+- Actualiza `src/data/shifts.json` con tus enlaces y nombres de QR.
+- Coloca los archivos QR en `public/qrs/`.
+- Si quieres persistencia real, conecta una base de datos y usa `sql/create_tables.sql`.
