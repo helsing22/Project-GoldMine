@@ -2,16 +2,31 @@
   "default": {
     "staff": "TurnoGeneral",
     "phone": "+53500000000",
-    "qr": "default.png"
+    "qr": "default-transfer.png",
+    "links": {
+      "zelle": "https://zellepay.com/tu-cuenta",
+      "paypal": "https://paypal.me/tuempresa",
+      "visa": "https://tu-pasarela-de-pago.example/visa"
+    }
   },
   "2026-04-28": {
     "staff": "Carlos",
     "phone": "+53500123456",
-    "qr": "2026-04-28-carlos.png"
+    "qr": "2026-04-28-transfer.png",
+    "links": {
+      "zelle": "https://zellepay.com/carlos",
+      "paypal": "https://paypal.me/carlos",
+      "visa": "https://pasarela.example/carlos"
+    }
   },
   "2026-04-29": {
     "staff": "María",
     "phone": "+53500987654",
-    "qr": "2026-04-29-maria.png"
+    "qr": "2026-04-29-transfer.png",
+    "links": {
+      "zelle": "https://zellepay.com/maria",
+      "paypal": "https://paypal.me/maria",
+      "visa": "https://pasarela.example/maria"
+    }
   }
 }
