@@ -1,14 +1,30 @@
-/* app.js - lógica completa del frontend */
+/* app.js - scroll vertical y UX consistente */
 (function () {
   /* Helpers */
   function formatPrice(value) { return `${Number(value).toLocaleString('es-CU')} CUP`; }
-  function el(selector) { return document.querySelector(selector); }
-  function on(selector, event, handler) { document.addEventListener(event, (e) => { if (e.target.closest && e.target.closest(selector)) handler(e); }); }
+  function el(sel) { return document.querySelector(sel); }
+  function on(sel, ev, fn) { document.addEventListener(ev, (e) => { if (e.target.closest && e.target.closest(sel)) fn(e); }); }
 
-  /* Render: categorías y menú */
+  /* Render: sidebar y menú (igual que antes) */
   function renderSidebar(categories) {
     const sidebar = el('#sidebar-categories');
-    sidebar.innerHTML = categories.map(cat => `<button class="sidebar__link" data-target="${cat.id}">${cat.name}</button>`).join('');
+    sidebar.innerHTML = categories.map(cat => `<button class="sidebar__link" data-target="${cat.id}" aria-controls="section-${cat.id}">${cat.name}</button>`).join('');
+    // keyboard navigation
+    sidebar.addEventListener('keydown', (e) => {
+      const focusable = Array.from(sidebar.querySelectorAll('.sidebar__link'));
+      const idx = focusable.indexOf(document.activeElement);
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        const next = focusable[(idx + 1) % focusable.length];
+        next.focus();
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        const prev = focusable[(idx - 1 + focusable.length) % focusable.length];
+        prev.focus();
+      } else if (e.key === 'Enter' && document.activeElement.classList.contains('sidebar__link')) {
+        document.activeElement.click();
+      }
+    });
     sidebar.addEventListener('click', (e) => {
       const btn = e.target.closest('button[data-target]');
       if (!btn) return;
@@ -21,9 +37,9 @@
   function renderMenuSections(categories) {
     const container = el('#menu-sections');
     container.innerHTML = categories.map(cat => `
-      <section class="menu-section" id="section-${cat.id}">
+      <section class="menu-section" id="section-${cat.id}" tabindex="-1">
         <h2 class="menu-section__title">${cat.name}</h2>
-        <div class="menu-grid">
+        <div class="menu-grid ${window.innerWidth >= 768 ? 'two-col' : ''}">
           ${cat.items.map(item => `
             <article class="menu-card ${item.soldOut ? 'menu-card--soldout' : ''}">
               <div class="menu-card__header">
@@ -44,7 +60,7 @@
 
   function escapeHtml(str) { return String(str).replace(/"/g, '&quot;'); }
 
-  /* Carrito en memoria */
+  /* Cart */
   const CART = {
     items: [],
     add(item) {
@@ -62,7 +78,6 @@
     total() { return this.items.reduce((s,i) => s + (i.price * i.qty), 0); }
   };
 
-  /* UI carrito */
   function renderCartCount() {
     const elCount = el('#cart-count');
     if (elCount) elCount.textContent = CART.items.reduce((s,i) => s + i.qty, 0);
@@ -90,7 +105,7 @@
     el('#cart-total').textContent = formatPrice(CART.total());
   }
 
-  /* Eventos globales: agregar, eliminar */
+  /* Events: add/remove */
   document.addEventListener('click', (e) => {
     const addBtn = e.target.closest('.btn-add');
     if (addBtn) {
@@ -98,7 +113,6 @@
       const name = addBtn.dataset.name;
       const price = Number(addBtn.dataset.price);
       CART.add({ id, name, price, qty: 1 });
-      // micro-feedback
       addBtn.animate([{ transform: 'scale(1.02)' }, { transform: 'scale(1)' }], { duration: 160 });
       return;
     }
@@ -109,73 +123,81 @@
     }
   });
 
-  /* Abrir / cerrar carrito */
+  /* Modal handling with body scroll lock */
+  function openModal(selector) {
+    el(selector).classList.remove('hidden');
+    document.body.classList.add('no-scroll');
+    // focus first focusable element
+    const focusable = el(selector).querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    if (focusable) focusable.focus();
+  }
+  function closeModal(selector) {
+    el(selector).classList.add('hidden');
+    document.body.classList.remove('no-scroll');
+  }
+
   const cartButton = el('#cart-button');
   const cartModal = el('#cart-modal');
   const closeCart = el('#close-cart');
-  cartButton.addEventListener('click', () => { renderCart(); cartModal.classList.remove('hidden'); });
-  closeCart.addEventListener('click', () => cartModal.classList.add('hidden'));
-  // cerrar modal al click en backdrop
+  cartButton.addEventListener('click', () => { renderCart(); openModal('#cart-modal'); });
+  closeCart.addEventListener('click', () => closeModal('#cart-modal'));
+  // backdrop close
   document.querySelectorAll('.modal__backdrop').forEach(b => b.addEventListener('click', (e) => {
-    const parent = e.target.closest('.modal');
-    if (parent) parent.classList.add('hidden');
+    const modal = e.target.closest('.modal');
+    if (modal) closeModal(`#${modal.id}`);
   }));
 
-  /* Comprar: copiar monto y abrir modal de métodos */
+  /* Buy flow: copy to clipboard + payment modal */
   el('#checkout-buy').addEventListener('click', async () => {
     if (CART.items.length === 0) { alert('Carrito vacío'); return; }
     const total = CART.total();
     try {
       await navigator.clipboard.writeText(`${total} CUP`);
-      // animación de confirmación breve
+      // small visual confirmation
       cartButton.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.06)' }, { transform: 'scale(1)' }], { duration: 300 });
     } catch (err) {
-      console.warn('No se pudo copiar al portapapeles', err);
+      console.warn('Clipboard failed', err);
     }
-    el('#payment-modal').classList.remove('hidden');
+    openModal('#payment-modal');
   });
 
-  /* Cerrar modal de pago */
-  el('#close-payment').addEventListener('click', () => el('#payment-modal').classList.add('hidden'));
+  el('#close-payment').addEventListener('click', () => closeModal('#payment-modal'));
 
-  /* Manejo selección de método de pago */
+  /* Payment selection */
   document.querySelectorAll('.btn-pay').forEach(btn => {
-    btn.addEventListener('click', async (e) => {
+    btn.addEventListener('click', async () => {
       const method = btn.dataset.method;
       const total = CART.total();
-      // Obtener shift del día para enlaces y QR
-      const shiftResp = await fetch('/api/shift');
+      // get shift info
       let shift = null;
-      if (shiftResp.ok) shift = await shiftResp.json();
-      else {
-        // fallback a default en client si no hay endpoint
-        const shifts = window.SHIFTS_JSON || null;
+      try {
+        const resp = await fetch('/api/shift');
+        if (resp.ok) shift = await resp.json();
+      } catch (err) { /* ignore */ }
+      // fallback to client-side shifts if available
+      if (!shift && window.SHIFTS_JSON) {
         const today = new Date().toISOString().slice(0,10);
-        shift = (shifts && (shifts[today] || shifts['default'])) || { links: {}, qr: 'default-transfer.png', staff: 'turno' };
+        shift = window.SHIFTS_JSON[today] || window.SHIFTS_JSON['default'];
       }
+      if (!shift) shift = { links: {}, qr: 'default-transfer.png', staff: 'turno' };
 
       if (method === 'zelle' || method === 'paypal' || method === 'visa') {
-        // abrir enlace configurado en shifts.json
-        const link = (shift.links && shift.links[method]) || (window.SHIFTS_JSON && window.SHIFTS_JSON['default'] && window.SHIFTS_JSON['default'].links[method]) || '#';
-        // Abrir en nueva pestaña
+        const link = (shift.links && shift.links[method]) || '#';
         window.open(link, '_blank');
-        // cerrar modales y limpiar carrito
-        el('#payment-modal').classList.add('hidden');
-        el('#cart-modal').classList.add('hidden');
+        closeModal('#payment-modal');
+        closeModal('#cart-modal');
         CART.clear();
       } else if (method === 'transfermovil') {
-        // pedir QR al backend
         try {
           const res = await fetch('/api/qr');
           if (!res.ok) throw new Error('No QR');
           const data = await res.json();
           el('#qr-image').src = data.qrUrl;
           el('#qr-note').textContent = `Total: ${formatPrice(total)} · Turno: ${data.staff || 'turno'}`;
-          el('#payment-modal').classList.add('hidden');
-          el('#qr-modal').classList.remove('hidden');
-          // limpiar carrito tras mostrar QR
+          closeModal('#payment-modal');
+          openModal('#qr-modal');
+          closeModal('#cart-modal');
           CART.clear();
-          el('#cart-modal').classList.add('hidden');
         } catch (err) {
           alert('No se pudo obtener el QR. Intenta nuevamente.');
         }
@@ -183,11 +205,12 @@
     });
   });
 
-  el('#close-qr').addEventListener('click', () => el('#qr-modal').classList.add('hidden'));
+  el('#close-qr').addEventListener('click', () => closeModal('#qr-modal'));
 
-  /* Observador de secciones para activar categoría */
+  /* IntersectionObserver to highlight category */
   function observeSections() {
     const sections = document.querySelectorAll('.menu-section');
+    if (!sections.length) return;
     const options = { root: null, threshold: 0.5 };
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
@@ -202,22 +225,19 @@
     sections.forEach(s => observer.observe(s));
   }
 
-  /* Inicialización */
+  /* Init */
   document.addEventListener('DOMContentLoaded', () => {
-    // Cargar menú
     renderSidebar(MENU_DATA);
     renderMenuSections(MENU_DATA);
     observeSections();
     el('#year').textContent = new Date().getFullYear();
     renderCartCount();
-
-    // Exponer SHIFTS_JSON si se cargó como script tag (index.html incluye shifts.json as script)
+    // expose SHIFTS_JSON if shifts.json was loaded as inline script (optional)
     try {
       const script = document.querySelector('script[type="application/json"][src="./src/data/shifts.json"]');
-      // fallback: window.SHIFTS_JSON puede ser inyectado por server si se desea
+      // nothing to do; server endpoint used as primary source
     } catch (err) { /* ignore */ }
   });
 
-  // Exponer CART para depuración
   window.CART = CART;
 })();
