@@ -1,30 +1,11 @@
-/* app.js - scroll vertical y UX consistente */
+/* src/js/app.js */
 (function () {
-  /* Helpers */
   function formatPrice(value) { return `${Number(value).toLocaleString('es-CU')} CUP`; }
   function el(sel) { return document.querySelector(sel); }
-  function on(sel, ev, fn) { document.addEventListener(ev, (e) => { if (e.target.closest && e.target.closest(sel)) fn(e); }); }
 
-  /* Render: sidebar y menú (igual que antes) */
   function renderSidebar(categories) {
     const sidebar = el('#sidebar-categories');
     sidebar.innerHTML = categories.map(cat => `<button class="sidebar__link" data-target="${cat.id}" aria-controls="section-${cat.id}">${cat.name}</button>`).join('');
-    // keyboard navigation
-    sidebar.addEventListener('keydown', (e) => {
-      const focusable = Array.from(sidebar.querySelectorAll('.sidebar__link'));
-      const idx = focusable.indexOf(document.activeElement);
-      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-        e.preventDefault();
-        const next = focusable[(idx + 1) % focusable.length];
-        next.focus();
-      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-        e.preventDefault();
-        const prev = focusable[(idx - 1 + focusable.length) % focusable.length];
-        prev.focus();
-      } else if (e.key === 'Enter' && document.activeElement.classList.contains('sidebar__link')) {
-        document.activeElement.click();
-      }
-    });
     sidebar.addEventListener('click', (e) => {
       const btn = e.target.closest('button[data-target]');
       if (!btn) return;
@@ -41,26 +22,65 @@
         <h2 class="menu-section__title">${cat.name}</h2>
         <div class="menu-grid ${window.innerWidth >= 768 ? 'two-col' : ''}">
           ${cat.items.map(item => `
-            <article class="menu-card ${item.soldOut ? 'menu-card--soldout' : ''}">
-              <div class="menu-card__header">
-                <h3>${item.name}</h3>
-                ${item.popular ? '<span class="tag tag--popular">Popular</span>' : ''}
+            <article class="menu-card ${item.soldOut ? 'menu-card--soldout' : ''}" data-item-id="${item.id}">
+              <div class="menu-card__imgwrap">
+                <img class="menu-card__img lazy-loading" data-src="${item.imageUrl}" alt="${escapeHtml(item.name)}" loading="lazy">
               </div>
-              ${item.description ? `<p class="menu-card__description">${item.description}</p>` : ''}
-              <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
-                <p class="menu-card__price">${formatPrice(item.price)}</p>
-                <button class="btn-add" data-id="${item.id}" data-name="${escapeHtml(item.name)}" data-price="${item.price}" ${item.soldOut ? 'disabled' : ''}>Agregar</button>
+              <div class="menu-card__content">
+                <div class="menu-card__header">
+                  <h3>${item.name}</h3>
+                  ${item.popular ? '<span class="tag tag--popular">Popular</span>' : ''}
+                </div>
+                ${item.description ? `<p class="menu-card__description">${item.description}</p>` : ''}
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+                  <p class="menu-card__price">${formatPrice(item.price)}</p>
+                  <button class="btn-add" data-id="${item.id}" data-name="${escapeHtml(item.name)}" data-price="${item.price}" ${item.soldOut ? 'disabled' : ''}>Agregar</button>
+                </div>
               </div>
             </article>
           `).join('')}
         </div>
       </section>
     `).join('');
+
+    initLazyImages();
   }
 
   function escapeHtml(str) { return String(str).replace(/"/g, '&quot;'); }
 
-  /* Cart */
+  function initLazyImages() {
+    const imgs = document.querySelectorAll('img.menu-card__img');
+    if (!('IntersectionObserver' in window)) {
+      imgs.forEach(img => loadImage(img));
+      return;
+    }
+    const io = new IntersectionObserver((entries, obs) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const img = entry.target;
+          loadImage(img);
+          obs.unobserve(img);
+        }
+      });
+    }, { root: null, threshold: 0.1 });
+    imgs.forEach(img => io.observe(img));
+  }
+
+  function loadImage(img) {
+    const src = img.dataset.src;
+    if (!src) return;
+    img.src = src;
+    img.onload = () => {
+      img.classList.remove('lazy-loading');
+      img.classList.add('loaded');
+    };
+    img.onerror = () => {
+      img.classList.remove('lazy-loading');
+      img.classList.add('loaded');
+      img.src = '/public/images/placeholder.png';
+    };
+  }
+
   const CART = {
     items: [],
     add(item) {
@@ -105,7 +125,6 @@
     el('#cart-total').textContent = formatPrice(CART.total());
   }
 
-  /* Events: add/remove */
   document.addEventListener('click', (e) => {
     const addBtn = e.target.closest('.btn-add');
     if (addBtn) {
@@ -123,11 +142,9 @@
     }
   });
 
-  /* Modal handling with body scroll lock */
   function openModal(selector) {
     el(selector).classList.remove('hidden');
     document.body.classList.add('no-scroll');
-    // focus first focusable element
     const focusable = el(selector).querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
     if (focusable) focusable.focus();
   }
@@ -137,23 +154,19 @@
   }
 
   const cartButton = el('#cart-button');
-  const cartModal = el('#cart-modal');
   const closeCart = el('#close-cart');
   cartButton.addEventListener('click', () => { renderCart(); openModal('#cart-modal'); });
   closeCart.addEventListener('click', () => closeModal('#cart-modal'));
-  // backdrop close
   document.querySelectorAll('.modal__backdrop').forEach(b => b.addEventListener('click', (e) => {
     const modal = e.target.closest('.modal');
     if (modal) closeModal(`#${modal.id}`);
   }));
 
-  /* Buy flow: copy to clipboard + payment modal */
   el('#checkout-buy').addEventListener('click', async () => {
     if (CART.items.length === 0) { alert('Carrito vacío'); return; }
     const total = CART.total();
     try {
       await navigator.clipboard.writeText(`${total} CUP`);
-      // small visual confirmation
       cartButton.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.06)' }, { transform: 'scale(1)' }], { duration: 300 });
     } catch (err) {
       console.warn('Clipboard failed', err);
@@ -163,18 +176,15 @@
 
   el('#close-payment').addEventListener('click', () => closeModal('#payment-modal'));
 
-  /* Payment selection */
   document.querySelectorAll('.btn-pay').forEach(btn => {
     btn.addEventListener('click', async () => {
       const method = btn.dataset.method;
       const total = CART.total();
-      // get shift info
       let shift = null;
       try {
         const resp = await fetch('/api/shift');
         if (resp.ok) shift = await resp.json();
       } catch (err) { /* ignore */ }
-      // fallback to client-side shifts if available
       if (!shift && window.SHIFTS_JSON) {
         const today = new Date().toISOString().slice(0,10);
         shift = window.SHIFTS_JSON[today] || window.SHIFTS_JSON['default'];
@@ -207,7 +217,6 @@
 
   el('#close-qr').addEventListener('click', () => closeModal('#qr-modal'));
 
-  /* IntersectionObserver to highlight category */
   function observeSections() {
     const sections = document.querySelectorAll('.menu-section');
     if (!sections.length) return;
@@ -225,18 +234,12 @@
     sections.forEach(s => observer.observe(s));
   }
 
-  /* Init */
   document.addEventListener('DOMContentLoaded', () => {
-    renderSidebar(MENU_DATA);
-    renderMenuSections(MENU_DATA);
+    renderSidebar(window.MENU_DATA || []);
+    renderMenuSections(window.MENU_DATA || []);
     observeSections();
     el('#year').textContent = new Date().getFullYear();
     renderCartCount();
-    // expose SHIFTS_JSON if shifts.json was loaded as inline script (optional)
-    try {
-      const script = document.querySelector('script[type="application/json"][src="./src/data/shifts.json"]');
-      // nothing to do; server endpoint used as primary source
-    } catch (err) { /* ignore */ }
   });
 
   window.CART = CART;
