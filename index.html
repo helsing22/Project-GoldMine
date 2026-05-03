@@ -2,92 +2,118 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Menú de mesa de Pizza Mary, Cienfuegos. Realiza tu pedido fácilmente." />
+  <meta name="theme-color" content="#b93412" />
   <title>Pizza Mary | Menú de mesa</title>
   <link rel="icon" href="./public/favicon.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <link rel="stylesheet" href="./src/css/styles.css" />
 </head>
 <body>
-  <div class="page-wrapper">
-    <header class="header">
-      <div class="header__brand">
-        <img src="./public/logo.jpg" alt="Pizza Mary" class="header__logo" />
-        <div class="brand-text">
-          <h1>Pizza Mary</h1>
-          <p class="muted">Menú de mesa · Cienfuegos</p>
-        </div>
+
+  <div class="app" id="app">
+    <!-- Encabezado -->
+    <header class="app-header">
+      <img src="./public/logo.jpg" alt="Pizza Mary" class="app-logo" />
+      <div>
+        <h1>Pizza Mary</h1>
+        <p class="subtitle">Menú de mesa · Cienfuegos</p>
       </div>
     </header>
 
-    <nav class="sidebar" id="sidebar-categories" aria-label="Categorías"></nav>
+    <!-- Categorías -->
+    <nav class="app-nav" id="app-nav" aria-label="Categorías del menú"></nav>
 
-    <main class="layout" id="main-layout">
-      <section class="notice" role="note">
-        <h2>Debes saber que...</h2>
-        <p>10% adicional en salón. Feriados: 24, 31 dic y 1 ene.</p>
-      </section>
-
-      <div id="menu-sections" class="menu-sections" aria-live="polite"></div>
+    <!-- Contenido principal -->
+    <main class="app-main">
+      <div class="notice" role="note">
+        <strong>Debes saber que...</strong><br />
+        10% adicional en salón. Feriados: 24, 31 dic y 1 ene.
+      </div>
+      <div id="menu-sections" aria-live="polite"></div>
     </main>
 
-    <button id="cart-button" class="cart-button" aria-label="Abrir carrito">🛒 <span id="cart-count">0</span></button>
-
-    <div id="cart-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="cart-title">
-      <div class="modal__backdrop" data-close="true"></div>
-      <div class="modal__panel">
-        <header class="modal__header">
-          <h3 id="cart-title">Tu pedido</h3>
-          <button id="close-cart" class="btn-icon" aria-label="Cerrar carrito">✕</button>
-        </header>
-        <div id="cart-items" class="cart-items"></div>
-        <div class="cart-summary">
-          <p>Total: <strong id="cart-total">0 CUP</strong></p>
-        </div>
-        <div class="checkout-actions">
-          <button id="checkout-buy" class="btn btn--primary">Comprar</button>
-        </div>
-      </div>
-    </div>
-
-    <div id="payment-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="payment-title">
-      <div class="modal__backdrop" data-close="true"></div>
-      <div class="modal__panel">
-        <header class="modal__header">
-          <h3 id="payment-title">Selecciona método de pago</h3>
-          <button id="close-payment" class="btn-icon" aria-label="Cerrar">✕</button>
-        </header>
-        <div class="payment-options">
-          <button class="btn-pay" data-method="zelle">Zelle</button>
-          <button class="btn-pay" data-method="paypal">PayPal</button>
-          <button class="btn-pay" data-method="visa">Visa</button>
-          <button class="btn-pay" data-method="transfermovil">Transfermóvil</button>
-        </div>
-        <p class="muted small">El monto se copió automáticamente al portapapeles.</p>
-      </div>
-    </div>
-
-    <div id="qr-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="qr-title">
-      <div class="modal__backdrop" data-close="true"></div>
-      <div class="modal__panel">
-        <header class="modal__header">
-          <h3 id="qr-title">Transfermóvil</h3>
-          <button id="close-qr" class="btn-icon" aria-label="Cerrar">✕</button>
-        </header>
-        <div class="qr-content">
-          <p>Escanea el QR para pagar:</p>
-          <img id="qr-image" src="" alt="QR Transfermóvil" class="qr-image">
-          <p id="qr-note" class="muted small"></p>
-        </div>
-      </div>
-    </div>
-
-    <footer class="footer">
-      <p class="muted">© <span id="year"></span> JotaJota</p>
+    <!-- Pie de página -->
+    <footer class="app-footer">
+      <p>&copy; <span id="year"></span> JotaJota</p>
     </footer>
   </div>
 
+  <!-- Botón flotante del carrito -->
+  <button class="cart-fab" id="cart-fab" aria-label="Ver carrito">
+    <i class="fa-solid fa-cart-shopping"></i>
+    <span class="cart-fab__badge" id="cart-badge" style="display:none">0</span>
+  </button>
+
+  <!-- Contenedor de toasts -->
+  <div class="toast-wrap" id="toast-wrap" aria-live="polite"></div>
+
+  <!-- Modal: Carrito -->
+  <div class="modal-overlay" id="cart-modal" role="dialog" aria-modal="true" aria-labelledby="cart-modal-title" aria-hidden="true">
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <header class="modal-header">
+        <h2 id="cart-modal-title">Tu pedido</h2>
+        <button class="modal-close" data-close aria-label="Cerrar carrito"><i class="fa-solid fa-xmark"></i></button>
+      </header>
+      <div class="modal-body" id="cart-body"></div>
+      <footer class="modal-footer" id="cart-footer">
+        <button class="cart-clear" id="cart-clear-btn">Vaciar carrito</button>
+        <div class="cart-total-row">
+          <span>Total</span>
+          <strong id="cart-total">0 CUP</strong>
+        </div>
+        <button class="btn-primary" id="checkout-btn">Comprar</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Modal: Método de pago -->
+  <div class="modal-overlay" id="payment-modal" role="dialog" aria-modal="true" aria-labelledby="pay-modal-title" aria-hidden="true">
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <header class="modal-header">
+        <h2 id="pay-modal-title">Metodo de pago</h2>
+        <button class="modal-close" data-close aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
+      </header>
+      <div class="modal-body">
+        <div class="pay-grid">
+          <button class="pay-btn" data-method="zelle"><i class="fa-solid fa-building-columns"></i>Zelle</button>
+          <button class="pay-btn" data-method="paypal"><i class="fa-brands fa-paypal"></i>PayPal</button>
+          <button class="pay-btn" data-method="visa"><i class="fa-brands fa-cc-visa"></i>Visa</button>
+          <button class="pay-btn" data-method="transfermovil"><i class="fa-solid fa-qrcode"></i>Transfermovil</button>
+        </div>
+        <p class="pay-note">El monto se copio al portapapeles.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: QR Transfermóvil -->
+  <div class="modal-overlay" id="qr-modal" role="dialog" aria-modal="true" aria-labelledby="qr-modal-title" aria-hidden="true">
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <header class="modal-header">
+        <h2 id="qr-modal-title">Transfermovil</h2>
+        <button class="modal-close" data-close aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
+      </header>
+      <div class="modal-body">
+        <div class="qr-wrap">
+          <p>Escanea el QR para pagar:</p>
+          <img id="qr-img" class="qr-img" src="" alt="Codigo QR Transfermovil" />
+          <p id="qr-note" class="qr-detail"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="./src/data/menu.js"></script>
-  <script src="./src/data/shifts.json" type="application/json"></script>
   <script src="./src/js/app.js"></script>
 </body>
 </html>
