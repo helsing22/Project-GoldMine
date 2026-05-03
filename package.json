@@ -1,7 +1,7 @@
 {
-  "name": "jotajota-menu",
+  "name": "MaryPizza-menu",
   "version": "1.0.0",
-  "description": "Menú de mesa JotaJota - pago en línea y efectivo",
+  "description": "Menú de mesa MaryPizza - pago en línea y efectivo",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
