@@ -268,3 +268,48 @@ body {
   .brand-text h1 { font-size: 1rem; }
   .menu-card__imgwrap { width: 80px; height: 80px; flex: 0 0 80px; }
 }
+
+/* Panel de secciones siempre visible en escritorio, responsive en móvil */
+#menu-sections {
+  /* estilos base para móvil / flujo normal */
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  transition: all 200ms ease;
+}
+
+/* Panel fijo en pantallas anchas */
+@media (min-width: 900px) {
+  #menu-sections.fixed-panel {
+    position: fixed;
+    right: 28px; /* separación desde el borde derecho */
+    top: calc(18px + 56px + 12px); /* evita solaparse con header (ajusta si tu header cambia) */
+    width: 320px; /* ancho del panel fijo */
+    max-height: calc(100vh - 140px); /* deja espacio para header/footer */
+    overflow: auto;
+    background: var(--card);
+    border-radius: 12px;
+    padding: 12px;
+    border: 1px solid #f0f0f2;
+    box-shadow: 0 18px 40px rgba(12,12,20,0.08);
+    z-index: 60;
+  }
+
+  /* Si el layout central es ancho, evita que el panel tape contenido importante:
+     reduce su ancho si la ventana es muy estrecha */
+  @media (min-width: 1100px) {
+    #menu-sections.fixed-panel { right: calc((100vw - var(--max-width, 900px)) / 2 + 24px); }
+  }
+
+  /* Ajuste visual para que el contenido principal no quede oculto por el panel:
+     añade un padding-right al main cuando el panel está activo */
+  .layout.with-fixed-sections {
+    padding-right: 360px; /* debe ser >= ancho del panel + separación */
+    transition: padding-right 200ms ease;
+  }
+}
+
+/* Pequeños ajustes para accesibilidad y foco */
+#menu-sections:focus { outline: none; }
+#menu-sections .section-title { font-weight: 700; margin-bottom: 8px; }
+
