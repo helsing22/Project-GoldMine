@@ -3,8 +3,10 @@
   function formatPrice(value) { return `${Number(value).toLocaleString('es-CU')} CUP`; }
   function el(sel) { return document.querySelector(sel); }
 
+  /* ---------- Sidebar & Menu rendering ---------- */
   function renderSidebar(categories) {
     const sidebar = el('#sidebar-categories');
+    if (!sidebar) return;
     sidebar.innerHTML = categories.map(cat => `<button class="sidebar__link" data-target="${cat.id}" aria-controls="section-${cat.id}">${cat.name}</button>`).join('');
     sidebar.addEventListener('click', (e) => {
       const btn = e.target.closest('button[data-target]');
@@ -17,9 +19,10 @@
 
   function renderMenuSections(categories) {
     const container = el('#menu-sections');
+    if (!container) return;
     container.innerHTML = categories.map(cat => `
       <section class="menu-section" id="section-${cat.id}" tabindex="-1">
-        <h2 class="menu-section__title">${cat.name}</h2>
+        <h2 class="menu-section__title section-title">${cat.name}</h2>
         <div class="menu-grid ${window.innerWidth >= 768 ? 'two-col' : ''}">
           ${cat.items.map(item => `
             <article class="menu-card ${item.soldOut ? 'menu-card--soldout' : ''}" data-item-id="${item.id}">
@@ -48,8 +51,10 @@
 
   function escapeHtml(str) { return String(str).replace(/"/g, '&quot;'); }
 
+  /* ---------- Lazy images ---------- */
   function initLazyImages() {
     const imgs = document.querySelectorAll('img.menu-card__img');
+    if (!imgs.length) return;
     if (!('IntersectionObserver' in window)) {
       imgs.forEach(img => loadImage(img));
       return;
@@ -81,6 +86,7 @@
     };
   }
 
+  /* ---------- Cart logic ---------- */
   const CART = {
     items: [],
     add(item) {
@@ -125,6 +131,7 @@
     el('#cart-total').textContent = formatPrice(CART.total());
   }
 
+  /* ---------- Global click handlers ---------- */
   document.addEventListener('click', (e) => {
     const addBtn = e.target.closest('.btn-add');
     if (addBtn) {
@@ -132,7 +139,7 @@
       const name = addBtn.dataset.name;
       const price = Number(addBtn.dataset.price);
       CART.add({ id, name, price, qty: 1 });
-      addBtn.animate([{ transform: 'scale(1.02)' }, { transform: 'scale(1)' }], { duration: 160 });
+      try { addBtn.animate([{ transform: 'scale(1.02)' }, { transform: 'scale(1)' }], { duration: 160 }); } catch (err) {}
       return;
     }
     const rem = e.target.closest('.cart-remove');
@@ -142,39 +149,49 @@
     }
   });
 
+  /* ---------- Modal helpers ---------- */
   function openModal(selector) {
-    el(selector).classList.remove('hidden');
+    const modal = el(selector);
+    if (!modal) return;
+    modal.classList.remove('hidden');
     document.body.classList.add('no-scroll');
-    const focusable = el(selector).querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    const focusable = modal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
     if (focusable) focusable.focus();
   }
   function closeModal(selector) {
-    el(selector).classList.add('hidden');
+    const modal = el(selector);
+    if (!modal) return;
+    modal.classList.add('hidden');
     document.body.classList.remove('no-scroll');
   }
 
+  /* ---------- Modal wiring ---------- */
   const cartButton = el('#cart-button');
   const closeCart = el('#close-cart');
-  cartButton.addEventListener('click', () => { renderCart(); openModal('#cart-modal'); });
-  closeCart.addEventListener('click', () => closeModal('#cart-modal'));
+  if (cartButton) cartButton.addEventListener('click', () => { renderCart(); openModal('#cart-modal'); });
+  if (closeCart) closeCart.addEventListener('click', () => closeModal('#cart-modal'));
   document.querySelectorAll('.modal__backdrop').forEach(b => b.addEventListener('click', (e) => {
     const modal = e.target.closest('.modal');
     if (modal) closeModal(`#${modal.id}`);
   }));
 
-  el('#checkout-buy').addEventListener('click', async () => {
-    if (CART.items.length === 0) { alert('Carrito vacío'); return; }
-    const total = CART.total();
-    try {
-      await navigator.clipboard.writeText(`${total} CUP`);
-      cartButton.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.06)' }, { transform: 'scale(1)' }], { duration: 300 });
-    } catch (err) {
-      console.warn('Clipboard failed', err);
-    }
-    openModal('#payment-modal');
-  });
+  const checkoutBtn = el('#checkout-buy');
+  if (checkoutBtn) {
+    checkoutBtn.addEventListener('click', async () => {
+      if (CART.items.length === 0) { alert('Carrito vacío'); return; }
+      const total = CART.total();
+      try {
+        await navigator.clipboard.writeText(`${total} CUP`);
+        try { cartButton.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.06)' }, { transform: 'scale(1)' }], { duration: 300 }); } catch (err) {}
+      } catch (err) {
+        console.warn('Clipboard failed', err);
+      }
+      openModal('#payment-modal');
+    });
+  }
 
-  el('#close-payment').addEventListener('click', () => closeModal('#payment-modal'));
+  const closePayment = el('#close-payment');
+  if (closePayment) closePayment.addEventListener('click', () => closeModal('#payment-modal'));
 
   document.querySelectorAll('.btn-pay').forEach(btn => {
     btn.addEventListener('click', async () => {
@@ -215,8 +232,10 @@
     });
   });
 
-  el('#close-qr').addEventListener('click', () => closeModal('#qr-modal'));
+  const closeQr = el('#close-qr');
+  if (closeQr) closeQr.addEventListener('click', () => closeModal('#qr-modal'));
 
+  /* ---------- Section observer for active sidebar link ---------- */
   function observeSections() {
     const sections = document.querySelectorAll('.menu-section');
     if (!sections.length) return;
@@ -234,13 +253,81 @@
     sections.forEach(s => observer.observe(s));
   }
 
+  /* ---------- Fixed panel behavior (always visible on desktop) ---------- */
+  const DESKTOP_BREAKPOINT = 900; // must match CSS media query
+  const menuSectionsEl = el('#menu-sections');
+  const mainLayout = el('#main-layout');
+  const pageWrapper = document.querySelector('.page-wrapper');
+
+  function enableFixedPanel() {
+    if (!menuSectionsEl) return;
+    if (!menuSectionsEl.classList.contains('fixed-panel')) {
+      menuSectionsEl.classList.add('fixed-panel');
+      menuSectionsEl.setAttribute('aria-hidden', 'false');
+      if (mainLayout) mainLayout.classList.add('with-fixed-sections');
+    }
+  }
+
+  function disableFixedPanel() {
+    if (!menuSectionsEl) return;
+    if (menuSectionsEl.classList.contains('fixed-panel')) {
+      menuSectionsEl.classList.remove('fixed-panel');
+      menuSectionsEl.removeAttribute('aria-hidden');
+      if (mainLayout) mainLayout.classList.remove('with-fixed-sections');
+      menuSectionsEl.style.right = '';
+      menuSectionsEl.style.top = '';
+    }
+  }
+
+  function updatePanelMode() {
+    if (!menuSectionsEl) return;
+    const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+    if (vw >= DESKTOP_BREAKPOINT) {
+      enableFixedPanel();
+      // dynamic right offset so panel sits outside .page-wrapper
+      if (pageWrapper) {
+        const wrapperRect = pageWrapper.getBoundingClientRect();
+        const gap = 24; // separation between wrapper and panel
+        // compute space to the right of wrapper
+        const spaceRight = Math.max(0, window.innerWidth - (wrapperRect.left + wrapperRect.width));
+        const rightOffset = Math.max(gap, spaceRight + gap);
+        menuSectionsEl.style.right = `${rightOffset}px`;
+      } else {
+        menuSectionsEl.style.right = '28px';
+      }
+      // compute top offset to avoid header overlap
+      const header = document.querySelector('.header');
+      const headerHeight = header ? header.getBoundingClientRect().height : 80;
+      const topGap = 12;
+      menuSectionsEl.style.top = `${headerHeight + topGap}px`;
+    } else {
+      disableFixedPanel();
+    }
+  }
+
+  // update on resize/orientation and on load
+  window.addEventListener('resize', updatePanelMode, { passive: true });
+  window.addEventListener('orientationchange', updatePanelMode);
+  // ensure update runs after DOM ready and after any dynamic layout changes
+  function scheduleUpdatePanelMode() {
+    // small debounce to avoid layout thrash
+    clearTimeout(scheduleUpdatePanelMode._t);
+    scheduleUpdatePanelMode._t = setTimeout(updatePanelMode, 120);
+  }
+
+  /* ---------- Initialization ---------- */
   document.addEventListener('DOMContentLoaded', () => {
     renderSidebar(window.MENU_DATA || []);
     renderMenuSections(window.MENU_DATA || []);
     observeSections();
     el('#year').textContent = new Date().getFullYear();
     renderCartCount();
+    scheduleUpdatePanelMode();
   });
 
+  // also run once immediately in case script loads after DOMContentLoaded
+  scheduleUpdatePanelMode();
+
+  // expose CART for debugging / external use
   window.CART = CART;
 })();
