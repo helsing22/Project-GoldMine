@@ -1,333 +1,465 @@
-/* src/js/app.js */
-(function () {
-  function formatPrice(value) { return `${Number(value).toLocaleString('es-CU')} CUP`; }
-  function el(sel) { return document.querySelector(sel); }
+/* src/js/app.js — Pizza Mary · Menú de mesa */
 
-  /* ---------- Sidebar & Menu rendering ---------- */
-  function renderSidebar(categories) {
-    const sidebar = el('#sidebar-categories');
-    if (!sidebar) return;
-    sidebar.innerHTML = categories.map(cat => `<button class="sidebar__link" data-target="${cat.id}" aria-controls="section-${cat.id}">${cat.name}</button>`).join('');
-    sidebar.addEventListener('click', (e) => {
-      const btn = e.target.closest('button[data-target]');
-      if (!btn) return;
-      const id = btn.dataset.target;
-      const section = document.getElementById(`section-${id}`);
-      if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
+/* =========================================================
+   Datos de ejemplo (eliminar si usas tu propio menu.js)
+   ========================================================= */
+const MENU_DATA_FALLBACK = [
+  {
+    id: 'pizzas', name: 'Pizzas', icon: 'fa-pizza-slice',
+    items: [
+      { id: 'p1', name: 'Pizza Margherita', description: 'Salsa de tomate, mozzarella y albahaca fresca', price: 450, imageUrl: 'https://picsum.photos/seed/marg-pz/400/300', popular: true },
+      { id: 'p2', name: 'Pizza Pepperoni', description: 'Pepperoni americano, mozzarella y salsa de tomate', price: 500, imageUrl: 'https://picsum.photos/seed/pepp-pz/400/300', popular: true },
+      { id: 'p3', name: 'Pizza Hawaiana', description: 'Jamon, pina y mozzarella gratinada', price: 480, imageUrl: 'https://picsum.photos/seed/hawa-pz/400/300' },
+      { id: 'p4', name: 'Pizza Cuatro Quesos', description: 'Mozzarella, gorgonzola, parmesano y provolone', price: 520, imageUrl: 'https://picsum.photos/seed/4cheese/400/300' },
+      { id: 'p5', name: 'Pizza Vegetariana', description: 'Pimientos, cebolla, champinones y aceitunas negras', price: 460, imageUrl: 'https://picsum.photos/seed/veg-pz/400/300' },
+      { id: 'p6', name: 'Pizza Barbacoa', description: 'Pollo barbacoa, cebolla caramelizada y queso', price: 530, imageUrl: 'https://picsum.photos/seed/bbq-pz/400/300' },
+      { id: 'p7', name: 'Pizza Napolitana', description: 'Tomate fresco, ajo, oregano y aceite de oliva', price: 440, imageUrl: 'https://picsum.photos/seed/nap-pz/400/300' },
+    ]
+  },
+  {
+    id: 'pastas', name: 'Pastas', icon: 'fa-bowl-food',
+    items: [
+      { id: 'pa1', name: 'Espaguetis Carbonara', description: 'Crema, huevo, bacon crocante y parmesano', price: 380, imageUrl: 'https://picsum.photos/seed/carbonara/400/300' },
+      { id: 'pa2', name: 'Fettuccine Alfredo', description: 'Salsa Alfredo con pollo grillado y parmesano', price: 400, imageUrl: 'https://picsum.photos/seed/alfredo/400/300' },
+      { id: 'pa3', name: 'Lasagna Bolognesa', description: 'Capas de pasta, carne, bechamel y queso gratinado', price: 420, imageUrl: 'https://picsum.photos/seed/lasagna/400/300', popular: true },
+      { id: 'pa4', name: 'Ravioli de Ricotta', description: 'Rellenos de ricotta espinaca con salsa de tomate', price: 390, imageUrl: 'https://picsum.photos/seed/ravioli/400/300' },
+    ]
+  },
+  {
+    id: 'ensaladas', name: 'Ensaladas', icon: 'fa-leaf',
+    items: [
+      { id: 'e1', name: 'Ensalada Cesar', description: 'Lechuga romana, pollo, crutones, parmesano y aderezo', price: 280, imageUrl: 'https://picsum.photos/seed/cesar/400/300' },
+      { id: 'e2', name: 'Ensalada Mediterranea', description: 'Tomate cherry, queso feta, aceitunas y oregano', price: 260, imageUrl: 'https://picsum.photos/seed/medit/400/300' },
+      { id: 'e3', name: 'Ensalada Caprese', description: 'Tomate, mozzarella fresca, albahaca y reduccion', price: 290, imageUrl: 'https://picsum.photos/seed/caprese/400/300' },
+    ]
+  },
+  {
+    id: 'bebidas', name: 'Bebidas', icon: 'fa-mug-hot',
+    items: [
+      { id: 'b1', name: 'Refresco', description: 'Coca-Cola, Fanta o Sprite 330ml', price: 80, imageUrl: 'https://picsum.photos/seed/soda-dr/400/300' },
+      { id: 'b2', name: 'Jugo Natural', description: 'Naranja, mango o guayaba natural', price: 100, imageUrl: 'https://picsum.photos/seed/juice-dr/400/300' },
+      { id: 'b3', name: 'Agua Mineral', description: 'Ciego Montero 500ml', price: 50, imageUrl: 'https://picsum.photos/seed/water-dr/400/300' },
+      { id: 'b4', name: 'Cerveza', description: 'Cristal o Bucanero 330ml', price: 120, imageUrl: 'https://picsum.photos/seed/beer-dr/400/300' },
+      { id: 'b5', name: 'Mojito', description: 'Ron, limon, hierbabuena, azucar y soda', price: 180, imageUrl: 'https://picsum.photos/seed/mojito-dr/400/300', popular: true },
+    ]
+  },
+  {
+    id: 'postres', name: 'Postres', icon: 'fa-ice-cream',
+    items: [
+      { id: 'po1', name: 'Tiramisu', description: 'Clasico italiano con mascarpone y cafe', price: 250, imageUrl: 'https://picsum.photos/seed/tiramisu-d/400/300', popular: true },
+      { id: 'po2', name: 'Helado', description: 'Dos bolas: vainilla, chocolate o limon', price: 120, imageUrl: 'https://picsum.photos/seed/icecream-d/400/300' },
+      { id: 'po3', name: 'Flan Casero', description: 'Con caramelo artesanal', price: 100, imageUrl: 'https://picsum.photos/seed/flan-d/400/300' },
+    ]
+  },
+  {
+    id: 'combos', name: 'Combos', icon: 'fa-box-open',
+    items: [
+      { id: 'c1', name: 'Combo Pizza + Refresco', description: 'Pizza mediana Margherita + refresco 330ml', price: 500, imageUrl: 'https://picsum.photos/seed/combo1-d/400/300', popular: true },
+      { id: 'c2', name: 'Combo Pasta + Ensalada', description: 'Espaguetis Carbonara + ensalada Cesar', price: 600, imageUrl: 'https://picsum.photos/seed/combo2-d/400/300' },
+      { id: 'c3', name: 'Combo Familiar', description: '2 pizzas medianas + 4 refrescos + postre para compartir', price: 1500, imageUrl: 'https://picsum.photos/seed/combo3-d/400/300' },
+      { id: 'c4', name: 'Combo Pareja', description: 'Pizza mediana + 2 cervezas + tiramisu', price: 850, imageUrl: 'https://picsum.photos/seed/combo4-d/400/300', soldOut: true },
+    ]
+  }
+];
+
+/* Turnos por defecto (fallback si no hay API ni JSON externo) */
+const DEFAULT_SHIFTS = {
+  links: { zelle: '#', paypal: '#', visa: '#' },
+  qr: 'https://picsum.photos/seed/qr-default/300/300',
+  staff: 'turno actual'
+};
+
+/* =========================================================
+   Utilidades
+   ========================================================= */
+function $(sel, ctx) { return (ctx || document).querySelector(sel); }
+function $$(sel, ctx) { return [...(ctx || document).querySelectorAll(sel)]; }
+
+function formatPrice(val) {
+  return Number(val).toLocaleString('es-CU') + ' CUP';
+}
+
+/* Escapar HTML de forma segura usando el DOM */
+function esc(str) {
+  const d = document.createElement('div');
+  d.textContent = String(str);
+  return d.innerHTML;
+}
+
+/* =========================================================
+   Sistema de toasts
+   ========================================================= */
+const toastWrap = $('#toast-wrap');
+
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  toastWrap.appendChild(t);
+  setTimeout(() => {
+    t.classList.add('out');
+    t.addEventListener('animationend', () => t.remove());
+  }, 2000);
+}
+
+/* =========================================================
+   Carrito
+   ========================================================= */
+const Cart = {
+  items: [],
+
+  add(id, name, price) {
+    const existing = this.items.find(i => i.id === id);
+    if (existing) {
+      existing.qty++;
+    } else {
+      this.items.push({ id, name, price: Number(price), qty: 1 });
+    }
+    this.renderBadge();
+  },
+
+  changeQty(id, delta) {
+    const item = this.items.find(i => i.id === id);
+    if (!item) return;
+    item.qty += delta;
+    if (item.qty <= 0) {
+      this.items = this.items.filter(i => i.id !== id);
+    }
+    this.renderBadge();
+    renderCartModal();
+  },
+
+  remove(id) {
+    this.items = this.items.filter(i => i.id !== id);
+    this.renderBadge();
+    renderCartModal();
+  },
+
+  clear() {
+    this.items = [];
+    this.renderBadge();
+    renderCartModal();
+  },
+
+  total() {
+    return this.items.reduce((s, i) => s + i.price * i.qty, 0);
+  },
+
+  count() {
+    return this.items.reduce((s, i) => s + i.qty, 0);
+  },
+
+  renderBadge() {
+    const badge = $('#cart-badge');
+    const count = this.count();
+    if (count > 0) {
+      badge.style.display = 'flex';
+      badge.textContent = count;
+      /* Forzar reflow para reiniciar la animación */
+      badge.classList.remove('bounce');
+      void badge.offsetWidth;
+      badge.classList.add('bounce');
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+};
+
+/* =========================================================
+   Renderizado del carrito en el modal
+   ========================================================= */
+function renderCartModal() {
+  const body = $('#cart-body');
+  const footer = $('#cart-footer');
+  const totalEl = $('#cart-total');
+
+  if (Cart.items.length === 0) {
+    body.innerHTML = '<p class="cart-empty"><i class="fa-regular fa-face-meh" style="font-size:1.6rem;display:block;margin-bottom:8px"></i>Tu carrito esta vacio</p>';
+    footer.style.display = 'none';
+    totalEl.textContent = formatPrice(0);
+    return;
   }
 
-  function renderMenuSections(categories) {
-    const container = el('#menu-sections');
-    if (!container) return;
-    container.innerHTML = categories.map(cat => `
-      <section class="menu-section" id="section-${cat.id}" tabindex="-1">
-        <h2 class="menu-section__title section-title">${cat.name}</h2>
-        <div class="menu-grid ${window.innerWidth >= 768 ? 'two-col' : ''}">
-          ${cat.items.map(item => `
-            <article class="menu-card ${item.soldOut ? 'menu-card--soldout' : ''}" data-item-id="${item.id}">
-              <div class="menu-card__imgwrap">
-                <img class="menu-card__img lazy-loading" data-src="${item.imageUrl}" alt="${escapeHtml(item.name)}" loading="lazy">
+  footer.style.display = 'flex';
+  body.innerHTML = Cart.items.map(it => `
+    <div class="cart-row">
+      <div class="cart-row-info">
+        <div class="cart-row-name">${esc(it.name)}</div>
+        <div class="cart-row-sub">${formatPrice(it.price)} c/u</div>
+      </div>
+      <div class="cart-qty">
+        <button data-qty-change="${it.id}" data-delta="-1" aria-label="Reducir cantidad"><i class="fa-solid fa-minus" style="font-size:0.65rem"></i></button>
+        <span>${it.qty}</span>
+        <button data-qty-change="${it.id}" data-delta="1" aria-label="Aumentar cantidad"><i class="fa-solid fa-plus" style="font-size:0.65rem"></i></button>
+      </div>
+      <div class="cart-row-total">${formatPrice(it.price * it.qty)}</div>
+    </div>
+  `).join('');
+
+  totalEl.textContent = formatPrice(Cart.total());
+}
+
+/* =========================================================
+   Renderizado de categorías (navegación)
+   ========================================================= */
+function renderNav(categories) {
+  const nav = $('#app-nav');
+  nav.innerHTML = categories.map(cat => `
+    <button class="nav-item" data-target="${cat.id}" aria-controls="section-${cat.id}">
+      <i class="fa-solid ${cat.icon || 'fa-utensils'}"></i>
+      <span>${esc(cat.name)}</span>
+    </button>
+  `).join('');
+}
+
+/* =========================================================
+   Renderizado de secciones y cards del menú
+   ========================================================= */
+function renderMenu(categories) {
+  const container = $('#menu-sections');
+  let cardIndex = 0;
+
+  container.innerHTML = categories.map(cat => `
+    <section class="menu-section" id="section-${cat.id}">
+      <h2 class="section-title">${esc(cat.name)}</h2>
+      <div class="menu-grid">
+        ${cat.items.map(item => {
+          const delay = cardIndex * 50;
+          cardIndex++;
+          return `
+            <article class="menu-card${item.soldOut ? ' menu-card--soldout' : ''}" style="animation-delay:${delay}ms" data-item-id="${item.id}">
+              <div class="card-img-wrap">
+                <img class="card-img" src="${esc(item.imageUrl)}" alt="${esc(item.name)}" loading="lazy" onload="this.classList.add('loaded')" onerror="this.classList.add('loaded');this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2288%22 height=%2288%22><rect fill=%22%23f0ece6%22 width=%2288%22 height=%2288%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23bbb%22 font-size=%2212%22>Sin imagen</text></svg>'" />
               </div>
-              <div class="menu-card__content">
-                <div class="menu-card__header">
-                  <h3>${item.name}</h3>
+              <div class="card-body">
+                <div class="card-top">
+                  <h3 class="card-name">${esc(item.name)}</h3>
                   ${item.popular ? '<span class="tag tag--popular">Popular</span>' : ''}
                 </div>
-                ${item.description ? `<p class="menu-card__description">${item.description}</p>` : ''}
-                <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
-                  <p class="menu-card__price">${formatPrice(item.price)}</p>
-                  <button class="btn-add" data-id="${item.id}" data-name="${escapeHtml(item.name)}" data-price="${item.price}" ${item.soldOut ? 'disabled' : ''}>Agregar</button>
+                ${item.description ? `<p class="card-desc">${esc(item.description)}</p>` : ''}
+                <div class="card-bottom">
+                  <span class="card-price">${formatPrice(item.price)}</span>
+                  ${!item.soldOut ? `<button class="btn-add" data-add-id="${item.id}" data-add-name="${esc(item.name)}" data-add-price="${item.price}"><i class="fa-solid fa-plus" style="font-size:0.7rem"></i> Agregar</button>` : ''}
                 </div>
               </div>
             </article>
-          `).join('')}
-        </div>
-      </section>
-    `).join('');
-
-    initLazyImages();
-  }
-
-  function escapeHtml(str) { return String(str).replace(/"/g, '&quot;'); }
-
-  /* ---------- Lazy images ---------- */
-  function initLazyImages() {
-    const imgs = document.querySelectorAll('img.menu-card__img');
-    if (!imgs.length) return;
-    if (!('IntersectionObserver' in window)) {
-      imgs.forEach(img => loadImage(img));
-      return;
-    }
-    const io = new IntersectionObserver((entries, obs) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const img = entry.target;
-          loadImage(img);
-          obs.unobserve(img);
-        }
-      });
-    }, { root: null, threshold: 0.1 });
-    imgs.forEach(img => io.observe(img));
-  }
-
-  function loadImage(img) {
-    const src = img.dataset.src;
-    if (!src) return;
-    img.src = src;
-    img.onload = () => {
-      img.classList.remove('lazy-loading');
-      img.classList.add('loaded');
-    };
-    img.onerror = () => {
-      img.classList.remove('lazy-loading');
-      img.classList.add('loaded');
-      img.src = '/public/images/placeholder.png';
-    };
-  }
-
-  /* ---------- Cart logic ---------- */
-  const CART = {
-    items: [],
-    add(item) {
-      const found = this.items.find(i => i.id === item.id);
-      if (found) found.qty += item.qty || 1;
-      else this.items.push({ ...item, qty: item.qty || 1 });
-      renderCartCount();
-    },
-    remove(id) {
-      this.items = this.items.filter(i => i.id !== id);
-      renderCart();
-      renderCartCount();
-    },
-    clear() { this.items = []; renderCart(); renderCartCount(); },
-    total() { return this.items.reduce((s,i) => s + (i.price * i.qty), 0); }
-  };
-
-  function renderCartCount() {
-    const elCount = el('#cart-count');
-    if (elCount) elCount.textContent = CART.items.reduce((s,i) => s + i.qty, 0);
-  }
-
-  function renderCart() {
-    const container = el('#cart-items');
-    if (!container) return;
-    if (CART.items.length === 0) {
-      container.innerHTML = '<p class="muted">Tu carrito está vacío.</p>';
-      el('#cart-total').textContent = formatPrice(0);
-      return;
-    }
-    container.innerHTML = CART.items.map(it => `
-      <div class="cart-row">
-        <div class="cart-row__left">
-          <strong>${it.name}</strong>
-          <div class="muted">x${it.qty} · ${formatPrice(it.price)}</div>
-        </div>
-        <div class="cart-row__right">
-          <button class="cart-remove" data-id="${it.id}">Eliminar</button>
-        </div>
+          `;
+        }).join('')}
       </div>
-    `).join('');
-    el('#cart-total').textContent = formatPrice(CART.total());
-  }
+    </section>
+  `;
+}
 
-  /* ---------- Global click handlers ---------- */
-  document.addEventListener('click', (e) => {
-    const addBtn = e.target.closest('.btn-add');
-    if (addBtn) {
-      const id = addBtn.dataset.id;
-      const name = addBtn.dataset.name;
-      const price = Number(addBtn.dataset.price);
-      CART.add({ id, name, price, qty: 1 });
-      try { addBtn.animate([{ transform: 'scale(1.02)' }, { transform: 'scale(1)' }], { duration: 160 }); } catch (err) {}
-      return;
-    }
-    const rem = e.target.closest('.cart-remove');
-    if (rem) {
-      CART.remove(rem.dataset.id);
-      return;
-    }
-  });
+/* =========================================================
+   Sistema de modales
+   ========================================================= */
+const modalStack = [];
 
-  /* ---------- Modal helpers ---------- */
-  function openModal(selector) {
-    const modal = el(selector);
-    if (!modal) return;
-    modal.classList.remove('hidden');
-    document.body.classList.add('no-scroll');
-    const focusable = modal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+function openModal(id) {
+  const modal = document.getElementById(id);
+  if (!modal) return;
+  modalStack.push(id);
+  modal.setAttribute('aria-hidden', 'false');
+  /* Bloquear fondo */
+  const app = $('#app');
+  if (app) app.setAttribute('inert', '');
+  document.body.style.overflow = 'hidden';
+  /* Forzar reflow y mostrar con animación */
+  modal.offsetHeight;
+  modal.classList.add('visible');
+  /* Foco al primer botón interactivo */
+  requestAnimationFrame(() => {
+    const focusable = modal.querySelector('.modal-close, button:not([data-close])');
     if (focusable) focusable.focus();
+  });
+}
+
+function closeModal(id) {
+  const modal = document.getElementById(id);
+  if (!modal) return;
+  modal.classList.remove('visible');
+  modal.setAttribute('aria-hidden', 'true');
+  /* Remover del stack */
+  const idx = modalStack.indexOf(id);
+  if (idx > -1) modalStack.splice(idx, 1);
+  /* Desbloquear fondo si no hay más modales abiertos */
+  if (modalStack.length === 0) {
+    const app = $('#app');
+    if (app) app.removeAttribute('inert');
+    document.body.style.overflow = '';
   }
-  function closeModal(selector) {
-    const modal = el(selector);
-    if (!modal) return;
-    modal.classList.add('hidden');
-    document.body.classList.remove('no-scroll');
+}
+
+function closeTopModal() {
+  if (modalStack.length > 0) {
+    closeModal(modalStack[modalStack.length - 1]);
   }
+}
 
-  /* ---------- Modal wiring ---------- */
-  const cartButton = el('#cart-button');
-  const closeCart = el('#close-cart');
-  if (cartButton) cartButton.addEventListener('click', () => { renderCart(); openModal('#cart-modal'); });
-  if (closeCart) closeCart.addEventListener('click', () => closeModal('#cart-modal'));
-  document.querySelectorAll('.modal__backdrop').forEach(b => b.addEventListener('click', (e) => {
-    const modal = e.target.closest('.modal');
-    if (modal) closeModal(`#${modal.id}`);
-  }));
+/* =========================================================
+   Observador de secciones para categoría activa
+   ========================================================= */
+function initSectionObserver() {
+  const sections = $$('.menu-section');
+  if (!sections.length) return;
 
-  const checkoutBtn = el('#checkout-buy');
-  if (checkoutBtn) {
-    checkoutBtn.addEventListener('click', async () => {
-      if (CART.items.length === 0) { alert('Carrito vacío'); return; }
-      const total = CART.total();
-      try {
-        await navigator.clipboard.writeText(`${total} CUP`);
-        try { cartButton.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.06)' }, { transform: 'scale(1)' }], { duration: 300 }); } catch (err) {}
-      } catch (err) {
-        console.warn('Clipboard failed', err);
-      }
-      openModal('#payment-modal');
-    });
-  }
-
-  const closePayment = el('#close-payment');
-  if (closePayment) closePayment.addEventListener('click', () => closeModal('#payment-modal'));
-
-  document.querySelectorAll('.btn-pay').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const method = btn.dataset.method;
-      const total = CART.total();
-      let shift = null;
-      try {
-        const resp = await fetch('/api/shift');
-        if (resp.ok) shift = await resp.json();
-      } catch (err) { /* ignore */ }
-      if (!shift && window.SHIFTS_JSON) {
-        const today = new Date().toISOString().slice(0,10);
-        shift = window.SHIFTS_JSON[today] || window.SHIFTS_JSON['default'];
-      }
-      if (!shift) shift = { links: {}, qr: 'default-transfer.png', staff: 'turno' };
-
-      if (method === 'zelle' || method === 'paypal' || method === 'visa') {
-        const link = (shift.links && shift.links[method]) || '#';
-        window.open(link, '_blank');
-        closeModal('#payment-modal');
-        closeModal('#cart-modal');
-        CART.clear();
-      } else if (method === 'transfermovil') {
-        try {
-          const res = await fetch('/api/qr');
-          if (!res.ok) throw new Error('No QR');
-          const data = await res.json();
-          el('#qr-image').src = data.qrUrl;
-          el('#qr-note').textContent = `Total: ${formatPrice(total)} · Turno: ${data.staff || 'turno'}`;
-          closeModal('#payment-modal');
-          openModal('#qr-modal');
-          closeModal('#cart-modal');
-          CART.clear();
-        } catch (err) {
-          alert('No se pudo obtener el QR. Intenta nuevamente.');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id.replace('section-', '');
+        $$('.nav-item').forEach(btn => btn.classList.remove('active'));
+        const activeBtn = $(`.nav-item[data-target="${id}"]`);
+        if (activeBtn) {
+          activeBtn.classList.add('active');
+          /* En móvil, scroll horizontal para centrar el botón activo */
+          if (window.innerWidth < 1024) {
+            activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+          }
         }
       }
     });
-  });
+  }, { rootMargin: '-20% 0px -70% 0px', threshold: 0 });
 
-  const closeQr = el('#close-qr');
-  if (closeQr) closeQr.addEventListener('click', () => closeModal('#qr-modal'));
+  sections.forEach(s => observer.observe(s));
+}
 
-  /* ---------- Section observer for active sidebar link ---------- */
-  function observeSections() {
-    const sections = document.querySelectorAll('.menu-section');
-    if (!sections.length) return;
-    const options = { root: null, threshold: 0.5 };
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          document.querySelectorAll('.sidebar__link').forEach(b => b.classList.remove('active'));
-          const id = entry.target.id.replace('section-','');
-          const btn = document.querySelector(`.sidebar__link[data-target="${id}"]`);
-          if (btn) btn.classList.add('active');
-        }
-      });
-    }, options);
-    sections.forEach(s => observer.observe(s));
+/* =========================================================
+   Obtener datos del turno (API o fallback)
+   ========================================================= */
+async function getShift() {
+  try {
+    const res = await fetch('/api/shift');
+    if (res.ok) return await res.json();
+  } catch (e) { /* sin API */ }
+  /* Fallback: usar variable global si existe (desde shifts.json externo) */
+  if (window.SHIFTS_JSON) {
+    const today = new Date().toISOString().slice(0, 10);
+    return window.SHIFTS_JSON[today] || window.SHIFTS_JSON['default'] || DEFAULT_SHIFTS;
   }
+  return DEFAULT_SHIFTS;
+}
 
-  /* ---------- Fixed panel behavior (always visible on desktop) ---------- */
-  const DESKTOP_BREAKPOINT = 900; // must match CSS media query
-  const menuSectionsEl = el('#menu-sections');
-  const mainLayout = el('#main-layout');
-  const pageWrapper = document.querySelector('.page-wrapper');
+/* =========================================================
+   Lógica de pago
+   ========================================================= */
+async function handlePayment(method) {
+  const total = Cart.total();
 
-  function enableFixedPanel() {
-    if (!menuSectionsEl) return;
-    if (!menuSectionsEl.classList.contains('fixed-panel')) {
-      menuSectionsEl.classList.add('fixed-panel');
-      menuSectionsEl.setAttribute('aria-hidden', 'false');
-      if (mainLayout) mainLayout.classList.add('with-fixed-sections');
+  if (method === 'transfermovil') {
+    try {
+      const res = await fetch('/api/qr');
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      $('#qr-img').src = data.qrUrl;
+      $('#qr-note').textContent = `Total: ${formatPrice(total)} · Turno: ${data.staff || 'turno'}`;
+    } catch (e) {
+      /* Fallback si no hay API */
+      const shift = await getShift();
+      $('#qr-img').src = shift.qr;
+      $('#qr-note').textContent = `Total: ${formatPrice(total)} · Turno: ${shift.staff}`;
     }
+    closeModal('payment-modal');
+    openModal('qr-modal');
+  } else {
+    /* Zelle, PayPal, Visa: abrir enlace */
+    const shift = await getShift();
+    const link = (shift.links && shift.links[method]) || '#';
+    window.open(link, '_blank');
+    closeModal('payment-modal');
   }
 
-  function disableFixedPanel() {
-    if (!menuSectionsEl) return;
-    if (menuSectionsEl.classList.contains('fixed-panel')) {
-      menuSectionsEl.classList.remove('fixed-panel');
-      menuSectionsEl.removeAttribute('aria-hidden');
-      if (mainLayout) mainLayout.classList.remove('with-fixed-sections');
-      menuSectionsEl.style.right = '';
-      menuSectionsEl.style.top = '';
-    }
+  /* Limpiar carrito y cerrar modal del carrito */
+  Cart.clear();
+  closeModal('cart-modal');
+}
+
+/* =========================================================
+   Delegación de eventos global
+   ========================================================= */
+document.addEventListener('click', (e) => {
+  /* --- Agregar al carrito --- */
+  const addBtn = e.target.closest('.btn-add');
+  if (addBtn) {
+    const { addId, addName, addPrice } = addBtn.dataset;
+    Cart.add(addId, addName, addPrice);
+    /* Feedback visual: checkmark temporal */
+    addBtn.classList.add('is-added');
+    addBtn.innerHTML = '<i class="fa-solid fa-check" style="font-size:0.7rem"></i> Listo';
+    setTimeout(() => {
+      addBtn.classList.remove('is-added');
+      addBtn.innerHTML = '<i class="fa-solid fa-plus" style="font-size:0.7rem"></i> Agregar';
+    }, 700);
+    showToast(`${addName} agregada`);
+    return;
   }
 
-  function updatePanelMode() {
-    if (!menuSectionsEl) return;
-    const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
-    if (vw >= DESKTOP_BREAKPOINT) {
-      enableFixedPanel();
-      // dynamic right offset so panel sits outside .page-wrapper
-      if (pageWrapper) {
-        const wrapperRect = pageWrapper.getBoundingClientRect();
-        const gap = 24; // separation between wrapper and panel
-        // compute space to the right of wrapper
-        const spaceRight = Math.max(0, window.innerWidth - (wrapperRect.left + wrapperRect.width));
-        const rightOffset = Math.max(gap, spaceRight + gap);
-        menuSectionsEl.style.right = `${rightOffset}px`;
-      } else {
-        menuSectionsEl.style.right = '28px';
-      }
-      // compute top offset to avoid header overlap
-      const header = document.querySelector('.header');
-      const headerHeight = header ? header.getBoundingClientRect().height : 80;
-      const topGap = 12;
-      menuSectionsEl.style.top = `${headerHeight + topGap}px`;
-    } else {
-      disableFixedPanel();
-    }
+  /* --- Cambiar cantidad en carrito --- */
+  const qtyBtn = e.target.closest('[data-qty-change]');
+  if (qtyBtn) {
+    Cart.changeQty(qtyBtn.dataset.qtyChange, Number(qtyBtn.dataset.delta));
+    return;
   }
 
-  // update on resize/orientation and on load
-  window.addEventListener('resize', updatePanelMode, { passive: true });
-  window.addEventListener('orientationchange', updatePanelMode);
-  // ensure update runs after DOM ready and after any dynamic layout changes
-  function scheduleUpdatePanelMode() {
-    // small debounce to avoid layout thrash
-    clearTimeout(scheduleUpdatePanelMode._t);
-    scheduleUpdatePanelMode._t = setTimeout(updatePanelMode, 120);
+  /* --- Navegación por categorías --- */
+  const navBtn = e.target.closest('.nav-item');
+  if (navBtn) {
+    const target = document.getElementById(`section-${navBtn.dataset.target}`);
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return;
   }
 
-  /* ---------- Initialization ---------- */
-  document.addEventListener('DOMContentLoaded', () => {
-    renderSidebar(window.MENU_DATA || []);
-    renderMenuSections(window.MENU_DATA || []);
-    observeSections();
-    el('#year').textContent = new Date().getFullYear();
-    renderCartCount();
-    scheduleUpdatePanelMode();
-  });
+  /* --- Cerrar modal (backdrop o botón con data-close) --- */
+  const closeTrigger = e.target.closest('[data-close]');
+  if (closeTrigger) {
+    const modal = closeTrigger.closest('.modal-overlay');
+    if (modal) closeModal(modal.id);
+    return;
+  }
 
-  // also run once immediately in case script loads after DOMContentLoaded
-  scheduleUpdatePanelMode();
+  /* --- Botón del carrito flotante --- */
+  if (e.target.closest('#cart-fab')) {
+    renderCartModal();
+    openModal('cart-modal');
+    return;
+  }
 
-  // expose CART for debugging / external use
-  window.CART = CART;
-})();
+  /* --- Vaciar carrito --- */
+  if (e.target.closest('#cart-clear-btn')) {
+    Cart.clear();
+    return;
+  }
+
+  /* --- Checkout: copiar total y abrir pago --- */
+  if (e.target.closest('#checkout-btn')) {
+    if (Cart.items.length === 0) return;
+    const total = Cart.total();
+    navigator.clipboard.writeText(`${total} CUP`).catch(() => {});
+    openModal('payment-modal');
+    return;
+  }
+
+  /* --- Método de pago --- */
+  const payBtn = e.target.closest('.pay-btn');
+  if (payBtn) {
+    handlePayment(payBtn.dataset.method);
+    return;
+  }
+});
+
+/* Escape para cerrar modal */
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeTopModal();
+});
+
+/* =========================================================
+   Inicialización
+   ========================================================= */
+document.addEventListener('DOMContentLoaded', () => {
+  /* Usar MENU_DATA externo si existe, si no el fallback */
+  const data = window.MENU_DATA || MENU_DATA_FALLBACK;
+  renderNav(data);
+  renderMenu(data);
+  initSectionObserver();
+  Cart.renderBadge();
+  $('#year').textContent = new Date().getFullYear();
+});
