@@ -683,7 +683,7 @@ export default function Home() {
       {/* ─── FOOTER ─── */}
       <footer className="mt-auto border-t border-gray-100 bg-white py-4 text-center">
         <p className="text-xs text-gray-400">
-          © {new Date().getFullYear()} Pizza Mary · JotaJota
+          © {new Date().getFullYear()} Pizza Mary · TwinCode Service
         </p>
       </footer>
 
