@@ -9,15 +9,15 @@ const geistSans = Geist({
 
 export const metadata: Metadata = {
   title: "Pizza Mary | Menú de mesa",
-  description: "Menú de mesa Pizza Mary - Cienfuegos. Pizzas, pastas, hamburguesas, bebidas y más.",
-  keywords: ["Pizza Mary", "menú", "Cienfuegos", "pizza", "restaurante", "Cuba"],
-  authors: [{ name: "JotaJota" }],
+  description: "Menú de mesa Pizza Mary - Aguada. Pizzas, pastas, hamburguesas, bebidas y más.",
+  keywords: ["Pizza Mary", "menú", "Aguada", "pizza", "restaurante", "Cuba"],
+  authors: [{ name: "TwinCode Service" }],
   icons: {
     icon: "/favicon.ico",
   },
   openGraph: {
     title: "Pizza Mary | Menú de mesa",
-    description: "Menú de mesa Pizza Mary - Cienfuegos",
+    description: "Menú de mesa Pizza Mary - Aguada",
     type: "website",
   },
 };

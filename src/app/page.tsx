@@ -624,7 +624,7 @@ export default function Home() {
           <div>
             <p className="text-xs font-semibold text-amber-700">Debes saber que...</p>
             <p className="text-xs text-amber-600">
-              10% adicional en salón. Feriados: 24, 31 dic y 1 ene.
+              Nuestra Super Hamburguesa es la especialidad de la Casa...
             </p>
           </div>
         </div>
